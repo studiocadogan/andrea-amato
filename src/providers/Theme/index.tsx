@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useCallback, use, useEffect, useState } from 'react'
+import type React from 'react'
+import { createContext, useCallback, use, useEffect, useState } from 'react'
 
 import type { Theme, ThemeContextType } from './types'
 
@@ -17,19 +18,31 @@ const ThemeContext = createContext(initialContext)
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setThemeState] = useState<Theme | undefined>(
-    canUseDOM ? (document.documentElement.getAttribute('data-theme') as Theme) : undefined,
+    canUseDOM
+      ? document.documentElement.classList.contains('dark')
+        ? 'dark'
+        : 'light'
+      : undefined,
   )
 
   const setTheme = useCallback((themeToSet: Theme | null) => {
     if (themeToSet === null) {
       window.localStorage.removeItem(themeLocalStorageKey)
       const implicitPreference = getImplicitPreference()
-      document.documentElement.setAttribute('data-theme', implicitPreference || '')
+      if (implicitPreference === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
       if (implicitPreference) setThemeState(implicitPreference)
     } else {
       setThemeState(themeToSet)
       window.localStorage.setItem(themeLocalStorageKey, themeToSet)
-      document.documentElement.setAttribute('data-theme', themeToSet)
+      if (themeToSet === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
   }, [])
 
@@ -47,7 +60,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    document.documentElement.setAttribute('data-theme', themeToSet)
+    if (themeToSet === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
     setThemeState(themeToSet)
   }, [])
 
